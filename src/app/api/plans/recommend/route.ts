@@ -41,6 +41,7 @@ export async function POST(request: Request) {
       score: plan.score,
       countyFips: plan.countyFips,
       matchReasons: plan.matchReasons,
+      explanation: plan.explanation,
     })),
   })
 }

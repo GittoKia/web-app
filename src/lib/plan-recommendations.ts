@@ -18,6 +18,7 @@ export type RankedPlan = Plan & {
   score: number
   countyFips: string | null
   matchReasons: string[]
+  explanation: string
 }
 
 function includesNormalized(values: unknown, candidate: string) {
@@ -88,11 +89,16 @@ export async function getRecommendedPlans(input: PlanRecommendationInput) {
         matchReasons.push('Matches selected plan filters')
       }
 
+      const explanation = countyFips
+        ? `This option is being ranked for county ${countyFips} and your selected coverage filters.`
+        : 'This option is being ranked from your selected coverage filters.'
+
       return {
         ...plan,
         score,
         countyFips,
         matchReasons,
+        explanation,
       } satisfies RankedPlan
     })
     .sort((left, right) => right.score - left.score || left.monthlyPremium - right.monthlyPremium)

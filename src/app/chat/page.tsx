@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { cookies } from 'next/headers'
 import { auth } from '@/auth'
 import { ChatWorkspace } from '@/components/chat/chat-workspace'
+import { PlanRecommendationPanel } from '@/components/chat/plan-recommendation-panel'
 import { SurfaceCard } from '@/components/ui/layout-shell'
 
 export default async function ChatPage() {
@@ -45,6 +46,8 @@ export default async function ChatPage() {
               </p>
             </div>
           </div>
+
+          <PlanRecommendationPanel />
 
           <ChatWorkspace />
 
