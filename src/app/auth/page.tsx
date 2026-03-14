@@ -66,20 +66,26 @@ export default function AuthPage() {
   }
 
   return (
-    <main className="min-h-screen bg-cream flex items-center justify-center px-6">
-      <div className="w-full max-w-[420px] bg-white rounded-2xl border border-tan p-6 flex flex-col gap-6">
-
-        {/* Header */}
+    <main className="min-h-screen bg-cream flex items-center justify-center px-6 py-10">
+      <div className="w-full max-w-[460px] surface-panel rounded-[28px] p-6 sm:p-7 flex flex-col gap-6 fade-rise">
         <div className="text-center">
+          <p className="section-eyebrow text-steel">Secure access</p>
           <h1 className="font-display italic text-[28px] leading-[1.2] text-charcoal">
             Caregiver AI
           </h1>
-          <p className="mt-2 font-sans text-[13px] leading-[1.4] text-steel">
-            Sign in to save your conversations.
+          <p className="mt-2 font-sans text-[14px] leading-6 text-steel">
+            Sign in to save your conversations, language, and care profile across visits.
           </p>
         </div>
 
-        {/* OAuth buttons */}
+        <div className="grid grid-cols-3 gap-2 rounded-2xl bg-cream/80 p-2 text-center">
+          {['Private', 'Multilingual', 'Free to try'].map((item) => (
+            <div key={item} className="rounded-xl bg-white px-3 py-2 font-sans text-[12px] font-medium text-steel">
+              {item}
+            </div>
+          ))}
+        </div>
+
         <div className="flex flex-col gap-3">
           <button
             type="button"
@@ -106,25 +112,32 @@ export default function AuthPage() {
           <div className="flex-1 h-px bg-tan" />
         </div>
 
-        {/* Email / Password */}
         <div className="flex flex-col gap-3">
           <div className="relative">
             <Mail size={20} strokeWidth={1.5} className="absolute start-4 top-1/2 -translate-y-1/2 text-steel pointer-events-none" />
             <input
               type="email"
               placeholder="Email"
+              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full h-12 ps-12 pe-4 rounded-xl border border-tan bg-white font-sans text-[14px] text-charcoal placeholder:text-mist outline-none focus:border-sage transition-colors duration-150"
             />
           </div>
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full h-12 px-4 rounded-xl border border-tan bg-white font-sans text-[14px] text-charcoal placeholder:text-mist outline-none focus:border-sage transition-colors duration-150"
-          />
+            <input
+              type="password"
+              placeholder="Password"
+              autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full h-12 px-4 rounded-xl border border-tan bg-white font-sans text-[14px] text-charcoal placeholder:text-mist outline-none focus:border-sage transition-colors duration-150"
+            />
+
+            {mode === 'signup' && (
+              <p className="px-1 font-sans text-[12px] leading-[1.5] text-steel">
+                Use a strong password so your care information stays protected.
+              </p>
+            )}
 
           {error && (
             <p className="font-sans text-[12px] leading-[1.4] text-coral">
@@ -132,13 +145,13 @@ export default function AuthPage() {
             </p>
           )}
 
-          <button
-            type="button"
-            onClick={handleEmailAuth}
-            disabled={loading}
-            className="w-full h-12 bg-navy text-cream rounded-xl font-sans text-[14px] font-bold transition-colors duration-150 hover:bg-navy-hover disabled:bg-silver disabled:text-mist disabled:cursor-not-allowed"
-          >
-            {loading ? 'Please wait...' : mode === 'signin' ? 'Sign in' : 'Create account'}
+            <button
+              type="button"
+              onClick={handleEmailAuth}
+              disabled={loading || !email || !password}
+              className="w-full h-12 bg-navy text-cream rounded-xl font-sans text-[14px] font-bold transition-colors duration-150 hover:bg-navy-hover disabled:bg-silver disabled:text-mist disabled:cursor-not-allowed"
+            >
+              {loading ? 'Please wait...' : mode === 'signin' ? 'Sign in' : 'Create account'}
           </button>
 
           <button
@@ -153,13 +166,13 @@ export default function AuthPage() {
         </div>
 
         {/* Guest */}
-        <button
-          type="button"
-          onClick={handleGuest}
-          className="font-sans text-[13px] text-mist text-center transition-colors duration-150 hover:text-steel"
-        >
-          Continue as guest
-        </button>
+          <button
+            type="button"
+            onClick={handleGuest}
+            className="rounded-xl border border-transparent px-4 py-3 font-sans text-[13px] text-mist text-center transition-colors duration-150 hover:text-steel"
+          >
+            Continue as guest
+          </button>
       </div>
     </main>
   )

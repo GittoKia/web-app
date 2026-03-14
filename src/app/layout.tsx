@@ -15,8 +15,8 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Caregiver AI",
-  description: "AI-powered caregiver support",
+  title: "Carebridge AI",
+  description: "Private, multilingual caregiver support for navigating care, coverage, and next steps.",
 };
 
 export default function RootLayout({

@@ -116,6 +116,18 @@ const STEP_TITLES = [
   'Do any of these apply to you?',
 ]
 
+const STEP_HELP = [
+  'We use your location to tailor care and coverage guidance.',
+  'Some programs depend on your current residency status.',
+  'An approximate month and year is enough.',
+  'Age helps us surface the right services and supports.',
+  'Work status can affect public and employer coverage options.',
+  'This helps us avoid recommending benefits you already have.',
+  'Family details help us estimate household eligibility.',
+  'A broad range is enough. You can always skip this.',
+  'Pick anything relevant so we can personalize support further.',
+] as const
+
 /* ── Tile component ───────────────────────────────────────── */
 
 function Tile({
@@ -184,6 +196,17 @@ export default function OnboardingPage() {
     }
   }
 
+  function previous() {
+    if (step === 0) {
+      router.push('/')
+      return
+    }
+
+    let previousStep = step - 1
+    if (step === 9 && skipSpecial) previousStep = 7
+    setStep(Math.max(previousStep, 0))
+  }
+
   function skip() {
     switch (step) {
       case 0: update('province', 'unknown'); break
@@ -236,8 +259,9 @@ export default function OnboardingPage() {
 
   if (step >= TOTAL_STEPS) {
     return (
-      <main className="min-h-screen bg-cream flex flex-col items-center justify-center px-6">
-        <div className="w-full max-w-md flex flex-col items-center gap-6 text-center">
+      <main className="min-h-screen bg-cream flex flex-col items-center justify-center px-6 py-10">
+        <div className="w-full max-w-md surface-panel rounded-[30px] p-8 flex flex-col items-center gap-6 text-center fade-rise">
+          <p className="section-eyebrow text-steel">Final step</p>
           <h1 className="onboarding-heading text-charcoal">
             Your information stays safe.
           </h1>
@@ -269,26 +293,42 @@ export default function OnboardingPage() {
 
   return (
     <main className="min-h-screen bg-cream flex flex-col">
-      {/* Progress bar — 4px, sage fill, silver track */}
-      <div className="w-full h-1 bg-silver">
-        <div
-          className="h-full bg-sage transition-all duration-300"
-          style={{ width: `${(displayStep / effectiveTotal) * 100}%` }}
-        />
-      </div>
-
-      <div className="flex-1 flex flex-col items-center px-6 py-10">
-        <div className="w-full max-w-[640px] mx-auto flex flex-col gap-4">
-
-          {/* Heading with icon */}
-          <div className="flex items-center gap-3">
-            <Icon size={20} strokeWidth={1.5} className="text-steel shrink-0" />
-            <h1 className="onboarding-heading text-charcoal">
-              {STEP_TITLES[step]}
-            </h1>
+      <div className="flex-1 flex flex-col items-center px-6 py-8 md:py-10">
+        <div className="w-full max-w-[720px] mx-auto surface-panel rounded-[30px] p-5 sm:p-7 md:p-8 flex flex-col gap-5 fade-rise">
+          <div className="flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={previous}
+              className="rounded-full border border-tan bg-white px-4 py-2 font-sans text-[13px] font-medium text-charcoal hover:border-sage"
+            >
+              Back
+            </button>
+            <div className="font-sans text-[12px] font-medium uppercase tracking-[0.18em] text-steel">
+              Step {displayStep} of {effectiveTotal}
+            </div>
           </div>
 
-          {/* Step content */}
+          <div className="progress-shell h-2 w-full overflow-hidden rounded-full bg-silver/90">
+            <div
+              className="h-full rounded-full bg-sage transition-all duration-300"
+              style={{ width: `${(displayStep / effectiveTotal) * 100}%` }}
+            />
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Icon size={20} strokeWidth={1.5} className="text-steel shrink-0" />
+            <div>
+              <p className="section-eyebrow text-steel">Care profile</p>
+              <h1 className="onboarding-heading text-charcoal">
+                {STEP_TITLES[step]}
+              </h1>
+            </div>
+          </div>
+
+          <p className="-mt-1 max-w-xl font-sans text-[14px] leading-6 text-steel">
+            {STEP_HELP[step]}
+          </p>
+
           <div className="flex flex-col gap-3">
 
             {/* ── Step 0: Province (dropdown) ──────────────── */}
@@ -573,7 +613,6 @@ export default function OnboardingPage() {
             )}
           </div>
 
-          {/* Skip link */}
           <button
             type="button"
             onClick={skip}
