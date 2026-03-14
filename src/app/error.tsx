@@ -2,11 +2,13 @@
 
 export default function GlobalError({ error }: { error: Error }) {
   return (
-    <html>
-      <body style={{ background: '#F5F0EA', color: '#2B2B2B', fontFamily: 'sans-serif', padding: 40 }}>
-        <h1>Something went wrong</h1>
-        <pre style={{ color: '#D4917A', fontSize: 13 }}>{error.message}</pre>
-      </body>
-    </html>
+    <div className="min-h-screen bg-cream flex flex-col items-center justify-center px-6">
+      <h1 className="font-display italic text-[28px] leading-[1.2] text-charcoal">
+        Something went wrong
+      </h1>
+      <p className="mt-4 font-sans text-[13px] leading-[1.4] text-coral">
+        {error.message}
+      </p>
+    </div>
   )
 }

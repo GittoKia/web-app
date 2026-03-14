@@ -83,12 +83,12 @@ export default function Home() {
       {/* Content */}
       <div className="relative z-10 flex flex-col items-center text-center px-6 gap-8 w-full max-w-3xl">
 
-        {/* Brand */}
+        {/* Brand — Playfair Display italic */}
         <span className="home-brand text-cream">
           Caregiver AI
         </span>
 
-        {/* Headline */}
+        {/* Headline — Playfair Display italic, 32px mobile / 48px desktop */}
         <h1 className="home-headline text-cream">
           Never be scared to go to the
           <br />
@@ -98,7 +98,7 @@ export default function Home() {
           </span>
         </h1>
 
-        {/* Subtitle */}
+        {/* Subtitle — DM Sans 16px, steel */}
         <p className="home-subtitle text-steel font-sans max-w-md">
           Your health companion — confidential, multilingual, free.
         </p>
@@ -114,20 +114,20 @@ export default function Home() {
           <button
             type="button"
             onClick={handleGuest}
-            className="flex items-center justify-center h-12 px-8 rounded-xl border border-tan text-charcoal bg-white/90 text-[14px] font-medium font-sans transition-colors duration-150 hover:border-sage"
+            className="flex items-center justify-center h-12 px-8 rounded-xl border border-tan text-charcoal bg-white text-[14px] font-medium font-sans transition-colors duration-150 hover:border-sage"
           >
             Try as guest
           </button>
         </div>
 
-        {/* Language selector */}
+        {/* Language selector — white cards, tan border, sage active */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full max-w-lg">
           {LANGUAGES.map(({ code, label }) => (
             <button
               key={code}
               type="button"
               onClick={() => handleLang(code)}
-              className={`bg-white text-charcoal text-sm text-center py-3 px-2 rounded-xl border font-sans transition-colors duration-150 ${
+              className={`bg-white text-charcoal text-[14px] text-center py-3 px-2 rounded-xl border font-sans transition-colors duration-150 ${
                 selectedLang === code ? 'lang-card-active' : 'lang-card'
               }`}
             >
@@ -137,8 +137,8 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Disclaimer */}
-      <p className="absolute bottom-4 left-0 right-0 text-center text-mist font-sans home-disclaimer">
+      {/* Disclaimer — DM Sans 11px, mist */}
+      <p className="absolute bottom-4 inset-x-0 text-center text-mist font-sans home-disclaimer">
         This is not medical advice. In an emergency, call 911.
       </p>
     </main>

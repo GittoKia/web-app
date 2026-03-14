@@ -278,7 +278,7 @@ export default function OnboardingPage() {
       </div>
 
       <div className="flex-1 flex flex-col items-center px-6 py-10">
-        <div className="w-full max-w-[640px] mx-auto flex flex-col gap-6">
+        <div className="w-full max-w-[640px] mx-auto flex flex-col gap-4">
 
           {/* Heading with icon */}
           <div className="flex items-center gap-3">
@@ -443,8 +443,8 @@ export default function OnboardingPage() {
                     }`}
                   >
                     <span
-                      className={`absolute top-0.5 left-0.5 w-6 h-6 rounded-full bg-white transition-transform duration-150 ${
-                        profile.dependants.spouse ? 'translate-x-5' : ''
+                      className={`absolute top-0.5 start-0.5 w-6 h-6 rounded-full bg-white transition-transform duration-150 ${
+                        profile.dependants.spouse ? 'ltr:translate-x-5 rtl:-translate-x-5' : ''
                       }`}
                     />
                   </button>

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { Mail } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import { useGuest } from '@/lib/guest-context'
 
@@ -15,26 +16,34 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false)
 
   async function handleGoogle() {
-    const supabase = createClient()
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
-    })
+    try {
+      const supabase = createClient()
+      await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: `${window.location.origin}/auth/callback` },
+      })
+    } catch {
+      setError('Could not connect to authentication service.')
+    }
   }
 
   async function handleApple() {
-    const supabase = createClient()
-    await supabase.auth.signInWithOAuth({
-      provider: 'apple',
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
-    })
+    try {
+      const supabase = createClient()
+      await supabase.auth.signInWithOAuth({
+        provider: 'apple',
+        options: { redirectTo: `${window.location.origin}/auth/callback` },
+      })
+    } catch {
+      setError('Could not connect to authentication service.')
+    }
   }
 
   async function handleEmailAuth() {
     setError('')
     setLoading(true)
-    const supabase = createClient()
     try {
+      const supabase = createClient()
       if (mode === 'signin') {
         const { error } = await supabase.auth.signInWithPassword({ email, password })
         if (error) throw error
@@ -57,20 +66,15 @@ export default function AuthPage() {
   }
 
   return (
-    <main className="min-h-screen bg-cream flex items-center justify-center px-4">
-      <div
-        className="w-full bg-white rounded-2xl border border-tan p-8 flex flex-col gap-6"
-        style={{ maxWidth: 420 }}
-      >
+    <main className="min-h-screen bg-cream flex items-center justify-center px-6">
+      <div className="w-full max-w-[420px] bg-white rounded-2xl border border-tan p-6 flex flex-col gap-6">
+
         {/* Header */}
         <div className="text-center">
-          <h1
-            className="text-3xl text-charcoal"
-            style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic' }}
-          >
+          <h1 className="font-display italic text-[28px] leading-[1.2] text-charcoal">
             Caregiver AI
           </h1>
-          <p className="mt-1 text-sm text-steel" style={{ fontFamily: 'var(--font-body)' }}>
+          <p className="mt-2 font-sans text-[13px] leading-[1.4] text-steel">
             Sign in to save your conversations.
           </p>
         </div>
@@ -78,69 +82,69 @@ export default function AuthPage() {
         {/* OAuth buttons */}
         <div className="flex flex-col gap-3">
           <button
+            type="button"
             onClick={handleGoogle}
-            className="flex items-center justify-center gap-3 w-full h-12 bg-white border border-tan rounded-xl text-charcoal text-sm font-medium transition-colors hover:border-sage"
-            style={{ fontFamily: 'var(--font-body)' }}
+            className="flex items-center justify-center gap-3 w-full h-12 bg-white border border-tan rounded-xl font-sans text-[14px] font-bold text-charcoal transition-colors duration-150 hover:border-sage"
           >
             <GoogleIcon />
             Continue with Google
           </button>
-
           <button
+            type="button"
             onClick={handleApple}
-            className="flex items-center justify-center gap-3 w-full h-12 bg-white border border-tan rounded-xl text-charcoal text-sm font-medium transition-colors hover:border-sage"
-            style={{ fontFamily: 'var(--font-body)' }}
+            className="flex items-center justify-center gap-3 w-full h-12 bg-white border border-tan rounded-xl font-sans text-[14px] font-bold text-charcoal transition-colors duration-150 hover:border-sage"
           >
             <AppleIcon />
             Continue with Apple
           </button>
         </div>
 
-        {/* Divider */}
+        {/* Divider — tan */}
         <div className="flex items-center gap-3">
-          <div className="flex-1 h-px bg-silver" />
-          <span className="text-xs text-mist" style={{ fontFamily: 'var(--font-body)' }}>or</span>
-          <div className="flex-1 h-px bg-silver" />
+          <div className="flex-1 h-px bg-tan" />
+          <span className="font-sans text-[12px] text-mist">or</span>
+          <div className="flex-1 h-px bg-tan" />
         </div>
 
         {/* Email / Password */}
         <div className="flex flex-col gap-3">
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            className="w-full h-11 px-4 rounded-xl border border-silver bg-white text-charcoal text-sm placeholder-mist outline-none focus:border-steel transition-colors"
-            style={{ fontFamily: 'var(--font-body)' }}
-          />
+          <div className="relative">
+            <Mail size={20} strokeWidth={1.5} className="absolute start-4 top-1/2 -translate-y-1/2 text-steel pointer-events-none" />
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full h-12 ps-12 pe-4 rounded-xl border border-tan bg-white font-sans text-[14px] text-charcoal placeholder:text-mist outline-none focus:border-sage transition-colors duration-150"
+            />
+          </div>
           <input
             type="password"
             placeholder="Password"
             value={password}
-            onChange={e => setPassword(e.target.value)}
-            className="w-full h-11 px-4 rounded-xl border border-silver bg-white text-charcoal text-sm placeholder-mist outline-none focus:border-steel transition-colors"
-            style={{ fontFamily: 'var(--font-body)' }}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full h-12 px-4 rounded-xl border border-tan bg-white font-sans text-[14px] text-charcoal placeholder:text-mist outline-none focus:border-sage transition-colors duration-150"
           />
 
           {error && (
-            <p className="text-xs text-coral" style={{ fontFamily: 'var(--font-body)' }}>
+            <p className="font-sans text-[12px] leading-[1.4] text-coral">
               {error}
             </p>
           )}
 
           <button
+            type="button"
             onClick={handleEmailAuth}
             disabled={loading}
-            className="w-full h-12 bg-navy text-cream rounded-xl text-sm font-medium disabled:opacity-60 transition-opacity"
-            style={{ fontFamily: 'var(--font-body)' }}
+            className="w-full h-12 bg-navy text-cream rounded-xl font-sans text-[14px] font-bold transition-colors duration-150 hover:bg-navy-hover disabled:bg-silver disabled:text-mist disabled:cursor-not-allowed"
           >
-            {loading ? 'Please wait…' : mode === 'signin' ? 'Sign in' : 'Create account'}
+            {loading ? 'Please wait...' : mode === 'signin' ? 'Sign in' : 'Create account'}
           </button>
 
           <button
-            onClick={() => { setMode(m => m === 'signin' ? 'signup' : 'signin'); setError('') }}
-            className="text-xs text-steel text-center hover:text-charcoal transition-colors"
-            style={{ fontFamily: 'var(--font-body)' }}
+            type="button"
+            onClick={() => { setMode((m) => m === 'signin' ? 'signup' : 'signin'); setError('') }}
+            className="font-sans text-[13px] text-steel text-center transition-colors duration-150 hover:text-charcoal"
           >
             {mode === 'signin'
               ? "Don't have an account? Create one"
@@ -150,9 +154,9 @@ export default function AuthPage() {
 
         {/* Guest */}
         <button
+          type="button"
           onClick={handleGuest}
-          className="text-xs text-mist text-center hover:text-steel transition-colors"
-          style={{ fontFamily: 'var(--font-body)' }}
+          className="font-sans text-[13px] text-mist text-center transition-colors duration-150 hover:text-steel"
         >
           Continue as guest
         </button>
@@ -175,7 +179,7 @@ function GoogleIcon() {
 function AppleIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12.26.64c.08.6-.17 1.2-.52 1.66-.38.5-.99.88-1.6.83-.09-.6.19-1.21.54-1.64C11.03.97 11.68.6 12.26.64ZM14.7 6.3c-.05.03-2.03 1.02-2.01 3.35.02 2.77 2.46 3.69 2.49 3.7-.03.08-.39 1.28-1.27 2.52-.77 1.08-1.57 2.14-2.79 2.16-1.19.02-1.58-.67-2.95-.67-1.38 0-1.81.65-2.94.69-1.18.04-2.08-1.14-2.86-2.21C.84 13.7-.19 10.63.93 8.1c.55-1.25 1.56-2.04 2.69-2.06 1.17-.02 1.67.67 2.99.67 1.31 0 1.73-.67 3.13-.67 1.01.01 1.97.5 2.96 1.26Z" fill="#000"/>
+      <path d="M12.26.64c.08.6-.17 1.2-.52 1.66-.38.5-.99.88-1.6.83-.09-.6.19-1.21.54-1.64C11.03.97 11.68.6 12.26.64ZM14.7 6.3c-.05.03-2.03 1.02-2.01 3.35.02 2.77 2.46 3.69 2.49 3.7-.03.08-.39 1.28-1.27 2.52-.77 1.08-1.57 2.14-2.79 2.16-1.19.02-1.58-.67-2.95-.67-1.38 0-1.81.65-2.94.69-1.18.04-2.08-1.14-2.86-2.21C.84 13.7-.19 10.63.93 8.1c.55-1.25 1.56-2.04 2.69-2.06 1.17-.02 1.67.67 2.99.67 1.31 0 1.73-.67 3.13-.67 1.01.01 1.97.5 2.96 1.26Z" fill="#2B2B2B"/>
     </svg>
   )
 }

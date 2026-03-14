@@ -61,7 +61,7 @@ body {
 
 .home-subtitle { font-size: 16px; line-height: 1.6; }
 .home-disclaimer { font-size: 11px; line-height: 1.4; }
-.home-cursor { animation: blink 600ms step-start infinite; margin-left: 2px; }
+.home-cursor { animation: blink 600ms step-start infinite; margin-inline-start: 2px; }
 
 .lang-card { border-color: #D2C2AF; }
 .lang-card:hover { border-color: #C2DFD0; }
