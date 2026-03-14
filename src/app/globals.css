@@ -13,6 +13,7 @@
 
   /* Custom palette */
   --color-navy: #1C2B3A;
+  --color-navy-hover: #15222E;
   --color-steel: #7B8D9A;
   --color-sage: #C2DFD0;
   --color-tan: #D2C2AF;
@@ -29,13 +30,16 @@ body {
   font-family: var(--font-body), Arial, Helvetica, sans-serif;
 }
 
+/* ── Animations ───────────────────────────────────────────── */
+
 @keyframes blink {
   0%, 100% { opacity: 1; }
-  50%       { opacity: 0; }
+  50%      { opacity: 0; }
 }
 
-/* ── Home page ─────────────────────────────────────────────── */
-.home-overlay      { opacity: 0.70; }
+/* ── Home page ────────────────────────────────────────────── */
+
+.home-overlay { opacity: 0.70; }
 
 .home-brand {
   font-family: var(--font-display), serif;
@@ -47,14 +51,31 @@ body {
 .home-headline {
   font-family: var(--font-display), serif;
   font-style: italic;
-  font-size: clamp(2rem, 5vw, 3rem);
+  font-size: 32px;
   line-height: 1.2;
 }
 
-.home-subtitle  { font-size: 16px; }
-.home-disclaimer { font-size: 12px; }
+@media (min-width: 768px) {
+  .home-headline { font-size: 48px; }
+}
 
+.home-subtitle { font-size: 16px; line-height: 1.6; }
+.home-disclaimer { font-size: 11px; line-height: 1.4; }
 .home-cursor { animation: blink 600ms step-start infinite; margin-left: 2px; }
 
-.lang-card         { border-color: #D2C2AF; }
-.lang-card-active  { border-color: #C2DFD0; box-shadow: 0 0 0 1px #C2DFD0; }
+.lang-card { border-color: #D2C2AF; }
+.lang-card:hover { border-color: #C2DFD0; }
+.lang-card-active { border-color: #C2DFD0; background-color: rgba(194, 223, 208, 0.1); }
+
+/* ── Onboarding ───────────────────────────────────────────── */
+
+.onboarding-heading {
+  font-family: var(--font-display), serif;
+  font-style: italic;
+  font-size: 22px;
+  line-height: 1.2;
+}
+
+@media (min-width: 768px) {
+  .onboarding-heading { font-size: 28px; }
+}

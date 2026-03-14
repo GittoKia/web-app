@@ -14,14 +14,48 @@ import { createClient } from '@/lib/supabase'
 /* ── Data ─────────────────────────────────────────────────── */
 
 const CA_PROVINCES = [
-  'ON', 'BC', 'QC', 'AB', 'MB', 'SK', 'NS', 'NB', 'NL', 'PE', 'NT', 'YT', 'NU',
+  { value: 'ON', label: 'Ontario' },
+  { value: 'BC', label: 'British Columbia' },
+  { value: 'QC', label: 'Quebec' },
+  { value: 'AB', label: 'Alberta' },
+  { value: 'MB', label: 'Manitoba' },
+  { value: 'SK', label: 'Saskatchewan' },
+  { value: 'NS', label: 'Nova Scotia' },
+  { value: 'NB', label: 'New Brunswick' },
+  { value: 'NL', label: 'Newfoundland' },
+  { value: 'PE', label: 'Prince Edward Island' },
+  { value: 'NT', label: 'Northwest Territories' },
+  { value: 'YT', label: 'Yukon' },
+  { value: 'NU', label: 'Nunavut' },
 ]
 
 const US_STATES = [
-  'AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA',
-  'KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ',
-  'NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT',
-  'VA','WA','WV','WI','WY','DC',
+  { value: 'AL', label: 'Alabama' }, { value: 'AK', label: 'Alaska' },
+  { value: 'AZ', label: 'Arizona' }, { value: 'AR', label: 'Arkansas' },
+  { value: 'CA', label: 'California' }, { value: 'CO', label: 'Colorado' },
+  { value: 'CT', label: 'Connecticut' }, { value: 'DE', label: 'Delaware' },
+  { value: 'FL', label: 'Florida' }, { value: 'GA', label: 'Georgia' },
+  { value: 'HI', label: 'Hawaii' }, { value: 'ID', label: 'Idaho' },
+  { value: 'IL', label: 'Illinois' }, { value: 'IN', label: 'Indiana' },
+  { value: 'IA', label: 'Iowa' }, { value: 'KS', label: 'Kansas' },
+  { value: 'KY', label: 'Kentucky' }, { value: 'LA', label: 'Louisiana' },
+  { value: 'ME', label: 'Maine' }, { value: 'MD', label: 'Maryland' },
+  { value: 'MA', label: 'Massachusetts' }, { value: 'MI', label: 'Michigan' },
+  { value: 'MN', label: 'Minnesota' }, { value: 'MS', label: 'Mississippi' },
+  { value: 'MO', label: 'Missouri' }, { value: 'MT', label: 'Montana' },
+  { value: 'NE', label: 'Nebraska' }, { value: 'NV', label: 'Nevada' },
+  { value: 'NH', label: 'New Hampshire' }, { value: 'NJ', label: 'New Jersey' },
+  { value: 'NM', label: 'New Mexico' }, { value: 'NY', label: 'New York' },
+  { value: 'NC', label: 'North Carolina' }, { value: 'ND', label: 'North Dakota' },
+  { value: 'OH', label: 'Ohio' }, { value: 'OK', label: 'Oklahoma' },
+  { value: 'OR', label: 'Oregon' }, { value: 'PA', label: 'Pennsylvania' },
+  { value: 'RI', label: 'Rhode Island' }, { value: 'SC', label: 'South Carolina' },
+  { value: 'SD', label: 'South Dakota' }, { value: 'TN', label: 'Tennessee' },
+  { value: 'TX', label: 'Texas' }, { value: 'UT', label: 'Utah' },
+  { value: 'VT', label: 'Vermont' }, { value: 'VA', label: 'Virginia' },
+  { value: 'WA', label: 'Washington' }, { value: 'WV', label: 'West Virginia' },
+  { value: 'WI', label: 'Wisconsin' }, { value: 'WY', label: 'Wyoming' },
+  { value: 'DC', label: 'Washington DC' },
 ]
 
 const IMMIGRATION_OPTIONS = [
@@ -64,13 +98,25 @@ const SPECIAL_OPTIONS = [
 ] as const
 
 const MONTHS = [
-  'January','February','March','April','May','June',
-  'July','August','September','October','November','December',
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
 ]
 
 const STEP_ICONS = [MapPin, Shield, Calendar, User, Briefcase, HeartHandshake, Users, DollarSign, Tag]
 
-/* ── Helpers ──────────────────────────────────────────────── */
+const STEP_TITLES = [
+  'Where do you live?',
+  'What is your immigration status?',
+  'When did you arrive?',
+  'How old are you?',
+  'What is your employment status?',
+  'Do you have employer health benefits?',
+  'Tell us about your family',
+  'What is your household income?',
+  'Do any of these apply to you?',
+]
+
+/* ── Tile component ───────────────────────────────────────── */
 
 function Tile({
   selected,
@@ -85,7 +131,7 @@ function Tile({
     <button
       type="button"
       onClick={onClick}
-      className={`flex items-center gap-3 w-full min-h-[48px] px-4 py-3 rounded-xl border text-left font-sans text-charcoal transition-colors ${
+      className={`flex items-center gap-3 w-full min-h-[48px] px-4 py-3 rounded-xl border text-start font-sans text-[14px] text-charcoal transition-colors duration-150 ${
         selected
           ? 'border-sage bg-sage/10'
           : 'border-tan bg-white hover:border-sage'
@@ -108,9 +154,6 @@ export default function OnboardingPage() {
   const [step, setStep] = useState(0)
   const [profile, setLocal] = useState<UserProfile>({ ...EMPTY_PROFILE })
 
-  // Province search
-  const [search, setSearch] = useState('')
-
   // Residency date
   const [resMonth, setResMonth] = useState('')
   const [resYear, setResYear] = useState('')
@@ -119,7 +162,7 @@ export default function OnboardingPage() {
   const [specialSelections, setSpecialSelections] = useState<string[]>([])
   const [noneSpecial, setNoneSpecial] = useState(false)
 
-  // Determine if we should skip step 9 (special category)
+  // Skip step 9 (special category) if citizen/PR
   const skipSpecial =
     profile.immigrationStatus === 'citizen' ||
     profile.immigrationStatus === 'permanent_resident'
@@ -133,17 +176,15 @@ export default function OnboardingPage() {
 
   function next() {
     let nextStep = step + 1
-    // Skip step 8 (index 8 = special category) if citizen/PR
     if (nextStep === 8 && skipSpecial) nextStep = 9
     if (nextStep >= TOTAL_STEPS) {
-      setStep(TOTAL_STEPS) // show consent
+      setStep(TOTAL_STEPS)
     } else {
       setStep(nextStep)
     }
   }
 
   function skip() {
-    // Set field to default/unknown and advance
     switch (step) {
       case 0: update('province', 'unknown'); break
       case 1: update('immigrationStatus', 'unknown'); break
@@ -160,7 +201,7 @@ export default function OnboardingPage() {
 
   function selectAndNext<K extends keyof UserProfile>(key: K, value: UserProfile[K]) {
     update(key, value)
-    setTimeout(next, 200)
+    setTimeout(next, 150)
   }
 
   async function handleSave() {
@@ -177,7 +218,7 @@ export default function OnboardingPage() {
             .insert({ user_id: user.id, action: 'profile_saved' })
         }
       } catch {
-        // Fall through to redirect
+        // Fall through
       }
     }
     setProfile(profile)
@@ -189,33 +230,32 @@ export default function OnboardingPage() {
     router.push('/chat')
   }
 
-  /* ── Render screens ─────────────────────────────────────── */
-
   const Icon = step < TOTAL_STEPS ? STEP_ICONS[step] : Tag
 
-  // Consent screen
+  /* ── Consent screen ─────────────────────────────────────── */
+
   if (step >= TOTAL_STEPS) {
     return (
       <main className="min-h-screen bg-cream flex flex-col items-center justify-center px-6">
         <div className="w-full max-w-md flex flex-col items-center gap-6 text-center">
-          <h1 className="font-display italic text-3xl text-charcoal">
+          <h1 className="onboarding-heading text-charcoal">
             Your information stays safe.
           </h1>
-          <p className="font-sans text-steel text-base max-w-sm">
+          <p className="font-sans text-[15px] leading-[1.6] text-steel max-w-sm">
             Everything is encrypted and protected. Only you can see it. Delete it all anytime.
           </p>
           <div className="flex flex-col gap-3 w-full">
             <button
               type="button"
               onClick={handleSave}
-              className="h-12 rounded-xl bg-navy text-cream font-bold font-sans w-full transition-opacity hover:opacity-90"
+              className="h-12 rounded-xl bg-navy text-cream text-[14px] font-bold font-sans w-full transition-colors duration-150 hover:bg-navy-hover"
             >
               Save my profile
             </button>
             <button
               type="button"
               onClick={handleContinueWithout}
-              className="h-12 rounded-xl border border-tan text-charcoal font-medium font-sans w-full transition-colors hover:border-sage"
+              className="h-12 rounded-xl border border-tan text-charcoal text-[14px] font-medium font-sans w-full transition-colors duration-150 hover:border-sage"
             >
               Continue without saving
             </button>
@@ -225,9 +265,11 @@ export default function OnboardingPage() {
     )
   }
 
+  /* ── Step screens ───────────────────────────────────────── */
+
   return (
     <main className="min-h-screen bg-cream flex flex-col">
-      {/* Progress bar */}
+      {/* Progress bar — 4px, sage fill, silver track */}
       <div className="w-full h-1 bg-silver">
         <div
           className="h-full bg-sage transition-all duration-300"
@@ -235,68 +277,46 @@ export default function OnboardingPage() {
         />
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center px-6 py-10">
-        <div className="w-full max-w-lg flex flex-col gap-6">
-          {/* Question heading */}
+      <div className="flex-1 flex flex-col items-center px-6 py-10">
+        <div className="w-full max-w-[640px] mx-auto flex flex-col gap-6">
+
+          {/* Heading with icon */}
           <div className="flex items-center gap-3">
             <Icon size={20} strokeWidth={1.5} className="text-steel shrink-0" />
-            <h1 className="font-display italic text-2xl md:text-3xl text-charcoal">
-              {step === 0 && 'Where do you live?'}
-              {step === 1 && 'What is your immigration status?'}
-              {step === 2 && 'When did you arrive?'}
-              {step === 3 && 'How old are you?'}
-              {step === 4 && 'What is your employment status?'}
-              {step === 5 && 'Do you have employer health benefits?'}
-              {step === 6 && 'Tell us about your family'}
-              {step === 7 && 'What is your household income?'}
-              {step === 8 && 'Do any of these apply to you?'}
+            <h1 className="onboarding-heading text-charcoal">
+              {STEP_TITLES[step]}
             </h1>
           </div>
 
           {/* Step content */}
-          <div className="flex flex-col gap-2">
-            {/* Step 0: Province */}
+          <div className="flex flex-col gap-3">
+
+            {/* ── Step 0: Province (dropdown) ──────────────── */}
             {step === 0 && (
-              <>
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full h-12 px-4 rounded-xl border border-silver bg-white font-sans text-charcoal placeholder:text-mist focus:outline-none focus:border-sage"
-                />
-                <p className="text-sm font-sans text-steel font-medium mt-2">Canada</p>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {CA_PROVINCES.filter((p) =>
-                    p.toLowerCase().includes(search.toLowerCase())
-                  ).map((p) => (
-                    <Tile
-                      key={p}
-                      selected={profile.province === p}
-                      onClick={() => selectAndNext('province', p)}
-                    >
-                      {p}
-                    </Tile>
-                  ))}
-                </div>
-                <p className="text-sm font-sans text-steel font-medium mt-4">United States</p>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {US_STATES.filter((s) =>
-                    s.toLowerCase().includes(search.toLowerCase())
-                  ).map((s) => (
-                    <Tile
-                      key={s}
-                      selected={profile.province === s}
-                      onClick={() => selectAndNext('province', s)}
-                    >
-                      {s}
-                    </Tile>
-                  ))}
-                </div>
-              </>
+              <div className="flex flex-col gap-3">
+                <select
+                  value={profile.province === 'unknown' ? '' : profile.province}
+                  onChange={(e) => {
+                    if (e.target.value) selectAndNext('province', e.target.value)
+                  }}
+                  className="w-full h-12 px-4 rounded-xl border border-tan bg-white font-sans text-[14px] text-charcoal transition-colors duration-150 focus:outline-none focus:border-sage appearance-none cursor-pointer"
+                >
+                  <option value="" disabled>Select your province or state</option>
+                  <optgroup label="Canada">
+                    {CA_PROVINCES.map(({ value, label }) => (
+                      <option key={value} value={value}>{label} ({value})</option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="United States">
+                    {US_STATES.map(({ value, label }) => (
+                      <option key={value} value={value}>{label} ({value})</option>
+                    ))}
+                  </optgroup>
+                </select>
+              </div>
             )}
 
-            {/* Step 1: Immigration status */}
+            {/* ── Step 1: Immigration status ───────────────── */}
             {step === 1 && (
               <div className="flex flex-col gap-2">
                 {IMMIGRATION_OPTIONS.map(({ value, label }) => (
@@ -311,35 +331,29 @@ export default function OnboardingPage() {
               </div>
             )}
 
-            {/* Step 2: Residency start date */}
+            {/* ── Step 2: Residency start date ─────────────── */}
             {step === 2 && (
               <div className="flex flex-col gap-3">
                 <div className="flex gap-3">
                   <select
                     value={resMonth}
                     onChange={(e) => setResMonth(e.target.value)}
-                    className="flex-1 h-12 px-4 rounded-xl border border-silver bg-white font-sans text-charcoal focus:outline-none focus:border-sage"
+                    className="flex-1 h-12 px-4 rounded-xl border border-tan bg-white font-sans text-[14px] text-charcoal transition-colors duration-150 focus:outline-none focus:border-sage"
                   >
                     <option value="">Month</option>
                     {MONTHS.map((m, i) => (
-                      <option key={m} value={String(i + 1).padStart(2, '0')}>
-                        {m}
-                      </option>
+                      <option key={m} value={String(i + 1).padStart(2, '0')}>{m}</option>
                     ))}
                   </select>
                   <select
                     value={resYear}
                     onChange={(e) => setResYear(e.target.value)}
-                    className="flex-1 h-12 px-4 rounded-xl border border-silver bg-white font-sans text-charcoal focus:outline-none focus:border-sage"
+                    className="flex-1 h-12 px-4 rounded-xl border border-tan bg-white font-sans text-[14px] text-charcoal transition-colors duration-150 focus:outline-none focus:border-sage"
                   >
                     <option value="">Year</option>
-                    {Array.from({ length: 50 }, (_, i) => new Date().getFullYear() - i).map(
-                      (y) => (
-                        <option key={y} value={y}>
-                          {y}
-                        </option>
-                      )
-                    )}
+                    {Array.from({ length: 50 }, (_, i) => new Date().getFullYear() - i).map((y) => (
+                      <option key={y} value={y}>{y}</option>
+                    ))}
                   </select>
                 </div>
                 {resMonth && resYear && (
@@ -349,7 +363,7 @@ export default function OnboardingPage() {
                       update('residencyStartDate', `${resYear}-${resMonth}`)
                       next()
                     }}
-                    className="h-12 rounded-xl bg-navy text-cream font-bold font-sans w-full transition-opacity hover:opacity-90"
+                    className="h-12 rounded-xl bg-navy text-cream text-[14px] font-bold font-sans w-full transition-colors duration-150 hover:bg-navy-hover"
                   >
                     Continue
                   </button>
@@ -363,7 +377,7 @@ export default function OnboardingPage() {
               </div>
             )}
 
-            {/* Step 3: Age band */}
+            {/* ── Step 3: Age band ─────────────────────────── */}
             {step === 3 && (
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {AGE_BANDS.map((band) => (
@@ -378,7 +392,7 @@ export default function OnboardingPage() {
               </div>
             )}
 
-            {/* Step 4: Employment */}
+            {/* ── Step 4: Employment ───────────────────────── */}
             {step === 4 && (
               <div className="flex flex-col gap-2">
                 {EMPLOYMENT_OPTIONS.map(({ value, label }) => (
@@ -393,7 +407,7 @@ export default function OnboardingPage() {
               </div>
             )}
 
-            {/* Step 5: Employer benefits */}
+            {/* ── Step 5: Employer benefits ────────────────── */}
             {step === 5 && (
               <div className="flex flex-col gap-2">
                 {BENEFITS_OPTIONS.map(({ value, label }) => (
@@ -408,12 +422,12 @@ export default function OnboardingPage() {
               </div>
             )}
 
-            {/* Step 6: Family / dependants */}
+            {/* ── Step 6: Family / dependants ──────────────── */}
             {step === 6 && (
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-3">
                 {/* Spouse toggle */}
-                <div className="flex items-center justify-between px-4 py-3 rounded-xl border border-tan bg-white">
-                  <span className="font-sans text-charcoal">
+                <div className="flex items-center justify-between px-4 py-4 rounded-xl border border-tan bg-white">
+                  <span className="font-sans text-[14px] text-charcoal">
                     Do you have a spouse or partner?
                   </span>
                   <button
@@ -424,12 +438,12 @@ export default function OnboardingPage() {
                         spouse: !profile.dependants.spouse,
                       })
                     }
-                    className={`relative w-12 h-7 rounded-full transition-colors ${
+                    className={`relative w-12 h-7 rounded-full transition-colors duration-150 ${
                       profile.dependants.spouse ? 'bg-sage' : 'bg-silver'
                     }`}
                   >
                     <span
-                      className={`absolute top-0.5 left-0.5 w-6 h-6 rounded-full bg-white shadow transition-transform ${
+                      className={`absolute top-0.5 left-0.5 w-6 h-6 rounded-full bg-white transition-transform duration-150 ${
                         profile.dependants.spouse ? 'translate-x-5' : ''
                       }`}
                     />
@@ -437,8 +451,8 @@ export default function OnboardingPage() {
                 </div>
 
                 {/* Children stepper */}
-                <div className="flex items-center justify-between px-4 py-3 rounded-xl border border-tan bg-white">
-                  <span className="font-sans text-charcoal">Children</span>
+                <div className="flex items-center justify-between px-4 py-4 rounded-xl border border-tan bg-white">
+                  <span className="font-sans text-[14px] text-charcoal">Children</span>
                   <div className="flex items-center gap-3">
                     <button
                       type="button"
@@ -448,11 +462,11 @@ export default function OnboardingPage() {
                           children: Math.max(0, profile.dependants.children - 1),
                         })
                       }
-                      className="w-8 h-8 flex items-center justify-center rounded-lg border border-silver text-steel hover:border-sage"
+                      className="w-9 h-9 flex items-center justify-center rounded-xl border border-tan text-steel transition-colors duration-150 hover:border-sage"
                     >
-                      <Minus size={16} />
+                      <Minus size={16} strokeWidth={1.5} />
                     </button>
-                    <span className="font-sans text-charcoal w-6 text-center">
+                    <span className="font-sans text-[15px] text-charcoal w-6 text-center">
                       {profile.dependants.children}
                     </span>
                     <button
@@ -463,9 +477,9 @@ export default function OnboardingPage() {
                           children: profile.dependants.children + 1,
                         })
                       }
-                      className="w-8 h-8 flex items-center justify-center rounded-lg border border-silver text-steel hover:border-sage"
+                      className="w-9 h-9 flex items-center justify-center rounded-xl border border-tan text-steel transition-colors duration-150 hover:border-sage"
                     >
-                      <Plus size={16} />
+                      <Plus size={16} strokeWidth={1.5} />
                     </button>
                   </div>
                 </div>
@@ -473,14 +487,14 @@ export default function OnboardingPage() {
                 <button
                   type="button"
                   onClick={next}
-                  className="h-12 rounded-xl bg-navy text-cream font-bold font-sans w-full transition-opacity hover:opacity-90"
+                  className="h-12 rounded-xl bg-navy text-cream text-[14px] font-bold font-sans w-full transition-colors duration-150 hover:bg-navy-hover"
                 >
                   Continue
                 </button>
               </div>
             )}
 
-            {/* Step 7: Income */}
+            {/* ── Step 7: Income ───────────────────────────── */}
             {step === 7 && (
               <div className="flex flex-col gap-2">
                 {INCOME_OPTIONS.map(({ value, label }) => (
@@ -495,9 +509,9 @@ export default function OnboardingPage() {
               </div>
             )}
 
-            {/* Step 8: Special category */}
+            {/* ── Step 8: Special category (chips) ─────────── */}
             {step === 8 && (
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-3">
                 <div className="flex flex-wrap gap-2">
                   {SPECIAL_OPTIONS.map(({ value, label }) => {
                     const isSelected = specialSelections.includes(value)
@@ -513,7 +527,7 @@ export default function OnboardingPage() {
                               : [...prev, value]
                           )
                         }}
-                        className={`px-4 py-2 rounded-full border font-sans text-sm transition-colors ${
+                        className={`px-4 py-2 rounded-full border font-sans text-[13px] transition-colors duration-150 ${
                           isSelected
                             ? 'border-sage bg-sage/10 text-charcoal'
                             : 'border-tan bg-white text-charcoal hover:border-sage'
@@ -529,7 +543,7 @@ export default function OnboardingPage() {
                       setNoneSpecial(true)
                       setSpecialSelections([])
                     }}
-                    className={`px-4 py-2 rounded-full border font-sans text-sm transition-colors ${
+                    className={`px-4 py-2 rounded-full border font-sans text-[13px] transition-colors duration-150 ${
                       noneSpecial
                         ? 'border-sage bg-sage/10 text-charcoal'
                         : 'border-tan bg-white text-charcoal hover:border-sage'
@@ -550,7 +564,7 @@ export default function OnboardingPage() {
                       )
                       next()
                     }}
-                    className="h-12 rounded-xl bg-navy text-cream font-bold font-sans w-full transition-opacity hover:opacity-90 mt-2"
+                    className="h-12 rounded-xl bg-navy text-cream text-[14px] font-bold font-sans w-full transition-colors duration-150 hover:bg-navy-hover"
                   >
                     Continue
                   </button>
@@ -563,12 +577,17 @@ export default function OnboardingPage() {
           <button
             type="button"
             onClick={skip}
-            className="text-mist font-sans text-sm hover:text-steel transition-colors self-center mt-2"
+            className="text-mist font-sans text-[13px] transition-colors duration-150 hover:text-steel self-center mt-2"
           >
             Skip
           </button>
         </div>
       </div>
+
+      {/* Disclaimer */}
+      <p className="py-4 text-center text-mist font-sans text-[11px] leading-[1.4]">
+        This is not medical advice. In an emergency, call 911.
+      </p>
     </main>
   )
 }

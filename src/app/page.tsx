@@ -47,12 +47,16 @@ export default function Home() {
   async function handleLang(code: string) {
     setSelectedLang(code)
     localStorage.setItem('lang', code)
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-      await supabase
-        .from('profiles')
-        .upsert({ id: user.id, language: code }, { onConflict: 'id' })
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        await supabase
+          .from('profiles')
+          .upsert({ id: user.id, language: code }, { onConflict: 'id' })
+      }
+    } catch {
+      // Supabase not configured
     }
   }
 
@@ -103,14 +107,14 @@ export default function Home() {
         <div className="flex flex-col sm:flex-row gap-3 w-full max-w-xs sm:max-w-none sm:justify-center">
           <Link
             href="/auth"
-            className="flex items-center justify-center h-12 px-8 rounded-xl bg-navy text-cream font-bold font-sans transition-opacity hover:opacity-90"
+            className="flex items-center justify-center h-12 px-8 rounded-xl bg-navy text-cream text-[14px] font-bold font-sans transition-colors duration-150 hover:bg-navy-hover"
           >
             Get started
           </Link>
           <button
             type="button"
             onClick={handleGuest}
-            className="flex items-center justify-center h-12 px-8 rounded-xl border border-tan text-charcoal bg-white/90 font-medium font-sans transition-colors hover:border-sage"
+            className="flex items-center justify-center h-12 px-8 rounded-xl border border-tan text-charcoal bg-white/90 text-[14px] font-medium font-sans transition-colors duration-150 hover:border-sage"
           >
             Try as guest
           </button>
@@ -123,7 +127,7 @@ export default function Home() {
               key={code}
               type="button"
               onClick={() => handleLang(code)}
-              className={`bg-white text-charcoal text-sm text-center py-3 px-2 rounded-xl border font-sans transition-colors ${
+              className={`bg-white text-charcoal text-sm text-center py-3 px-2 rounded-xl border font-sans transition-colors duration-150 ${
                 selectedLang === code ? 'lang-card-active' : 'lang-card'
               }`}
             >
