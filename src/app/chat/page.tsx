@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { cookies } from 'next/headers'
 import { auth } from '@/auth'
+import { ChatWorkspace } from '@/components/chat/chat-workspace'
 import { SurfaceCard } from '@/components/ui/layout-shell'
 
 export default async function ChatPage() {
@@ -40,10 +41,12 @@ export default async function ChatPage() {
             <div className="rounded-card border border-tan bg-cream p-4">
               <p className="font-sans text-[13px] font-medium text-charcoal">Next build step</p>
               <p className="mt-2 font-sans text-[14px] leading-6 text-steel">
-                Replace this placeholder with the real care guidance and AI conversation experience.
+                Claude-backed retrieval now answers against the live coverage docs repository.
               </p>
             </div>
           </div>
+
+          <ChatWorkspace />
 
           <div className="flex flex-col gap-3 sm:flex-row">
             <Link href="/onboarding" className="btn-primary flex items-center justify-center sm:max-w-[220px]">

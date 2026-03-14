@@ -217,6 +217,42 @@ exports.Prisma.PlanScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.ChatConversationScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  guestSessionId: 'guestSessionId',
+  title: 'title',
+  latestQuestion: 'latestQuestion',
+  latestAnswer: 'latestAnswer',
+  metadata: 'metadata',
+  medicalExtraction: 'medicalExtraction',
+  medicalFeatures: 'medicalFeatures',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.ChatMessageScalarFieldEnum = {
+  id: 'id',
+  conversationId: 'conversationId',
+  role: 'role',
+  content: 'content',
+  sequence: 'sequence',
+  metadata: 'metadata',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.ChatRetrievalHitScalarFieldEnum = {
+  id: 'id',
+  conversationId: 'conversationId',
+  messageId: 'messageId',
+  title: 'title',
+  relativePath: 'relativePath',
+  score: 'score',
+  excerpt: 'excerpt',
+  metadata: 'metadata',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -316,7 +352,10 @@ exports.Prisma.ModelName = {
   Authenticator: 'Authenticator',
   Profile: 'Profile',
   ConsentLog: 'ConsentLog',
-  Plan: 'Plan'
+  Plan: 'Plan',
+  ChatConversation: 'ChatConversation',
+  ChatMessage: 'ChatMessage',
+  ChatRetrievalHit: 'ChatRetrievalHit'
 };
 
 /**
