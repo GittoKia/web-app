@@ -28,3 +28,33 @@ body {
   color: var(--foreground);
   font-family: var(--font-body), Arial, Helvetica, sans-serif;
 }
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+/* ── Home page ─────────────────────────────────────────────── */
+.home-overlay      { opacity: 0.70; }
+
+.home-brand {
+  font-family: var(--font-display), serif;
+  font-style: italic;
+  font-size: 20px;
+  letter-spacing: 0.15em;
+}
+
+.home-headline {
+  font-family: var(--font-display), serif;
+  font-style: italic;
+  font-size: clamp(2rem, 5vw, 3rem);
+  line-height: 1.2;
+}
+
+.home-subtitle  { font-size: 16px; }
+.home-disclaimer { font-size: 12px; }
+
+.home-cursor { animation: blink 600ms step-start infinite; margin-left: 2px; }
+
+.lang-card         { border-color: #D2C2AF; }
+.lang-card-active  { border-color: #C2DFD0; box-shadow: 0 0 0 1px #C2DFD0; }
