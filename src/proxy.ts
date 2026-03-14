@@ -1,44 +1,22 @@
-import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { getToken } from 'next-auth/jwt'
 
 const PROTECTED = ['/chat', '/insurance', '/hospitals', '/onboarding']
 
 export async function proxy(request: NextRequest) {
   const response = NextResponse.next({ request })
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-  if (!supabaseUrl || !supabaseKey || supabaseUrl.includes('placeholder')) {
-    return response
-  }
-
   try {
-    const supabase = createServerClient(
-      supabaseUrl,
-      supabaseKey,
-      {
-        cookies: {
-          getAll() {
-            return request.cookies.getAll()
-          },
-          setAll(cookiesToSet) {
-            for (const { name, value, options } of cookiesToSet) {
-              request.cookies.set(name, value)
-              response.cookies.set(name, value, options)
-            }
-          },
-        },
-      }
-    )
-
-    const { data: { user } } = await supabase.auth.getUser()
+    const session = await getToken({
+      req: request,
+      secret: process.env.AUTH_SECRET,
+    })
     const pathname = request.nextUrl.pathname
     const isProtected = PROTECTED.some(p => pathname.startsWith(p))
 
     if (isProtected) {
       const isGuest = request.cookies.get('guest')?.value === '1'
-      if (!user && !isGuest) {
+      if (!session && !isGuest) {
         const url = request.nextUrl.clone()
         url.pathname = '/auth'
         return NextResponse.redirect(url)

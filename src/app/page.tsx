@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useGuest } from '@/lib/guest-context'
-import { createClient } from '@/lib/supabase'
 
 const WORD = 'Hospital'
 const TICK_MS = 120
@@ -58,17 +57,6 @@ export default function Home() {
   async function handleLang(code: string) {
     setSelectedLang(code)
     localStorage.setItem('lang', code)
-    try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        await supabase
-          .from('profiles')
-          .upsert({ id: user.id, language: code }, { onConflict: 'id' })
-      }
-    } catch {
-      // Supabase not configured
-    }
   }
 
   function handleGuest() {

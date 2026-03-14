@@ -2,14 +2,14 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { signIn } from 'next-auth/react'
 import { Mail } from 'lucide-react'
 import { PageShell, SurfaceCard } from '@/components/ui/layout-shell'
-import { createClient } from '@/lib/supabase'
 import { useGuest } from '@/lib/guest-context'
 
 export default function AuthPage() {
   const router = useRouter()
-  const { setGuest } = useGuest()
+  const { setGuest, clearGuest } = useGuest()
   const [mode, setMode] = useState<'signin' | 'signup'>('signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -18,10 +18,9 @@ export default function AuthPage() {
 
   async function handleGoogle() {
     try {
-      const supabase = createClient()
-      await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: { redirectTo: `${window.location.origin}/auth/callback` },
+      clearGuest()
+      await signIn('google', {
+        redirectTo: '/auth/callback',
       })
     } catch {
       setError('Could not connect to authentication service.')
@@ -30,10 +29,9 @@ export default function AuthPage() {
 
   async function handleApple() {
     try {
-      const supabase = createClient()
-      await supabase.auth.signInWithOAuth({
-        provider: 'apple',
-        options: { redirectTo: `${window.location.origin}/auth/callback` },
+      clearGuest()
+      await signIn('apple', {
+        redirectTo: '/auth/callback',
       })
     } catch {
       setError('Could not connect to authentication service.')
@@ -43,17 +41,36 @@ export default function AuthPage() {
   async function handleEmailAuth() {
     setError('')
     setLoading(true)
+
     try {
-      const supabase = createClient()
-      if (mode === 'signin') {
-        const { error } = await supabase.auth.signInWithPassword({ email, password })
-        if (error) throw error
-        router.push('/chat')
-      } else {
-        const { error } = await supabase.auth.signUp({ email, password })
-        if (error) throw error
-        router.push('/onboarding')
+      clearGuest()
+
+      if (mode === 'signup') {
+        const response = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, password }),
+        })
+
+        if (!response.ok) {
+          const data = (await response.json().catch(() => null)) as { error?: string } | null
+          throw new Error(data?.error ?? 'Could not create your account.')
+        }
       }
+
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+      })
+
+      if (result?.error) {
+        throw new Error('Incorrect email or password.')
+      }
+
+      router.push('/auth/callback')
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Something went wrong.')
     } finally {

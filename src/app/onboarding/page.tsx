@@ -10,7 +10,6 @@ import { PageShell, SurfaceCard } from '@/components/ui/layout-shell'
 import { UserProfile, EMPTY_PROFILE } from '@/lib/profile'
 import { useProfile } from '@/lib/profile-context'
 import { useGuest } from '@/lib/guest-context'
-import { createClient } from '@/lib/supabase'
 
 /* ── Data ─────────────────────────────────────────────────── */
 
@@ -230,21 +229,21 @@ export default function OnboardingPage() {
 
   async function handleSave() {
     if (!isGuest) {
-      try {
-        const supabase = createClient()
-        const { data: { user } } = await supabase.auth.getUser()
-        if (user) {
-          await supabase
-            .from('profiles')
-            .upsert({ id: user.id, ...profile }, { onConflict: 'id' })
-          await supabase
-            .from('consent_log')
-            .insert({ user_id: user.id, action: 'profile_saved' })
-        }
-      } catch {
-        // Fall through
+      const response = await fetch('/api/profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(profile),
+      })
+
+      if (!response.ok) {
+        setProfile(profile)
+        router.push('/chat')
+        return
       }
     }
+
     setProfile(profile)
     router.push('/chat')
   }
