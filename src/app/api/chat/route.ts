@@ -7,6 +7,8 @@ import {
   buildMedicalMlFeatures,
   medicalFeaturePipelineInputSchema,
 } from '@/lib/medical-feature-pipeline'
+import { lookupDrug } from '@/lib/rxnorm-client'
+import { searchProviders, normalizeProvider } from '@/lib/npi-registry'
 import { prisma } from '@/lib/prisma'
 
 export const runtime = 'nodejs'
@@ -58,12 +60,20 @@ export async function POST(request: Request) {
   }
 
   const latestUserMessage = getLatestUserMessage(parsed.data.messages)
-  const coverageMatches = await searchCoverageDocs(latestUserMessage, 5)
-  const medicalFeatures = parsed.data.patientContext
-    ? await buildMedicalMlFeatures(parsed.data.patientContext)
-    : null
+
+  // Run coverage search and medical features in parallel
+  const [coverageMatches, medicalFeatures] = await Promise.all([
+    searchCoverageDocs(latestUserMessage, 5).catch(() => []),
+    parsed.data.patientContext
+      ? buildMedicalMlFeatures(parsed.data.patientContext).catch(() => null)
+      : Promise.resolve(null),
+  ])
+
   const medicalExtractionJson = medicalFeatures?.extraction
   const medicalFeatureJson = medicalFeatures?.features
+
+  // Enrich with live API data when the message mentions drugs or providers
+  const liveContext = await buildLiveContext(latestUserMessage)
 
   let text: string
   try {
@@ -71,15 +81,19 @@ export async function POST(request: Request) {
       model: chatModelName,
       system:
         [
-          'You are Carebridge, a healthcare coverage support assistant.',
-          'Answer using the retrieved policy and coverage documents first, then use medical feature context if provided.',
+          'You are CareBridge, a healthcare coverage support assistant.',
+          'You have access to live data from official US healthcare APIs (CMS, NPI Registry, RxNorm, OpenFDA).',
+          'Answer using the live API data and retrieved coverage documents.',
           'Be explicit when information is missing.',
           'Do not claim a benefit is covered unless the source context supports it.',
           'Keep answers practical and readable.',
-          'Include brief source references by filename.',
+          'When referencing drug information, note that it comes from RxNorm/FDA databases.',
+          'When referencing provider information, note that it comes from the NPI Registry.',
           '',
           'Retrieved coverage context:',
           formatCoverageContext(coverageMatches),
+          '',
+          liveContext ? `Live API data:\n${liveContext}` : '',
           '',
           'Optional medical feature context:',
           medicalFeatures
@@ -92,7 +106,7 @@ export async function POST(request: Request) {
                 2,
               )
             : 'No patient-specific medical feature context provided.',
-        ].join('\n'),
+        ].filter(Boolean).join('\n'),
       messages: parsed.data.messages,
     })
   } catch (err) {
@@ -206,4 +220,115 @@ export async function POST(request: Request) {
     })),
     medicalFeatures: medicalFeatures?.features ?? null,
   })
+}
+
+/**
+ * Detect drug names and provider references in the user message,
+ * then fetch live data from RxNorm/OpenFDA and NPI Registry.
+ */
+async function buildLiveContext(message: string): Promise<string> {
+  const parts: string[] = []
+  const lowerMsg = message.toLowerCase()
+
+  // Common drug keywords that suggest the user is asking about a medication
+  const drugPatterns = /\b(medication|drug|prescription|medicine|taking|dosage|side effect|interaction|generic|brand)\b/i
+  const providerPatterns = /\b(doctor|provider|physician|specialist|dentist|clinic|hospital|Dr\.?\s+\w+|NPI)\b/i
+
+  // Extract potential drug names — look for capitalized words near drug keywords
+  if (drugPatterns.test(message)) {
+    const potentialDrugs = extractDrugNames(message)
+
+    if (potentialDrugs.length > 0) {
+      const drugResults = await Promise.all(
+        potentialDrugs.slice(0, 3).map((name) =>
+          lookupDrug(name).catch(() => null)
+        )
+      )
+
+      const validResults = drugResults.filter(Boolean)
+      if (validResults.length > 0) {
+        parts.push('Drug information from RxNorm/FDA:')
+        for (const drug of validResults) {
+          if (!drug) continue
+          parts.push(`- ${drug.normalizedName}${drug.brandNames.length ? ` (brands: ${drug.brandNames.slice(0, 3).join(', ')})` : ''}`)
+          if (drug.purpose) parts.push(`  Purpose: ${drug.purpose.slice(0, 300)}`)
+          if (drug.interactions.length > 0) {
+            parts.push(`  Known interactions: ${drug.interactions.slice(0, 3).map((i) => i.description.slice(0, 150)).join('; ')}`)
+          }
+        }
+      }
+    }
+  }
+
+  // Extract provider references
+  if (providerPatterns.test(message)) {
+    const drMatch = message.match(/Dr\.?\s+(\w+)\s+(\w+)/i)
+    if (drMatch) {
+      const results = await searchProviders({
+        firstName: drMatch[1],
+        lastName: drMatch[2],
+        limit: 3,
+      }).catch(() => null)
+
+      if (results?.results?.length) {
+        parts.push('Provider information from NPI Registry:')
+        for (const result of results.results.slice(0, 2)) {
+          const p = normalizeProvider(result)
+          parts.push(`- ${p.name}${p.credential ? `, ${p.credential}` : ''} — ${p.specialty ?? 'General Practice'}`)
+          if (p.address) {
+            parts.push(`  Location: ${p.address.city}, ${p.address.state} ${p.address.zip}${p.address.phone ? ` | Phone: ${p.address.phone}` : ''}`)
+          }
+        }
+      }
+    }
+  }
+
+  return parts.join('\n')
+}
+
+/**
+ * Simple heuristic to extract potential drug names from a message.
+ */
+function extractDrugNames(message: string): string[] {
+  const commonDrugs = [
+    'metformin', 'lisinopril', 'amlodipine', 'metoprolol', 'omeprazole',
+    'simvastatin', 'losartan', 'albuterol', 'gabapentin', 'hydrochlorothiazide',
+    'atorvastatin', 'levothyroxine', 'amoxicillin', 'azithromycin', 'ibuprofen',
+    'acetaminophen', 'prednisone', 'fluticasone', 'montelukast', 'escitalopram',
+    'sertraline', 'duloxetine', 'bupropion', 'trazodone', 'alprazolam',
+    'insulin', 'warfarin', 'eliquis', 'xarelto', 'jardiance', 'ozempic',
+    'humira', 'enbrel', 'advair', 'symbicort', 'lantus', 'trulicity',
+  ]
+
+  const words = message.split(/[\s,;.()]+/)
+  const found: string[] = []
+
+  for (const word of words) {
+    const lower = word.toLowerCase()
+    if (commonDrugs.includes(lower)) {
+      found.push(word)
+    }
+  }
+
+  // Also capture capitalized words that might be drug names (2+ chars, not common English)
+  const commonEnglish = new Set([
+    'the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'can', 'had', 'her',
+    'was', 'one', 'our', 'out', 'day', 'get', 'has', 'him', 'his', 'how', 'its',
+    'may', 'new', 'now', 'old', 'see', 'way', 'who', 'did', 'let', 'say', 'she',
+    'too', 'use', 'what', 'about', 'could', 'make', 'like', 'just', 'over', 'such',
+    'take', 'than', 'them', 'very', 'when', 'come', 'been', 'have', 'from', 'with',
+    'will', 'each', 'which', 'their', 'said', 'does', 'plan', 'plans', 'drug', 'drugs',
+    'doctor', 'medication', 'taking', 'prescription', 'coverage', 'insurance', 'health',
+    'medical', 'care', 'cost', 'price', 'generic', 'brand', 'side', 'effect', 'dose',
+  ])
+
+  const capitalizedPattern = /\b[A-Z][a-z]{2,}\b/g
+  let match: RegExpExecArray | null
+  while ((match = capitalizedPattern.exec(message)) !== null) {
+    if (!commonEnglish.has(match[0].toLowerCase()) && !found.includes(match[0])) {
+      found.push(match[0])
+    }
+  }
+
+  return [...new Set(found)].slice(0, 5)
 }
