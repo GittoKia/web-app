@@ -30,6 +30,13 @@ function extractJsonObject(content: string) {
   throw new Error('Model response did not contain valid JSON.')
 }
 
+function stripReasoningBlocks(content: string) {
+  return content
+    .replace(/<think>[\s\S]*?<\/think>/gi, '')
+    .replace(/```(?:thinking|thought|reasoning)[\s\S]*?```/gi, '')
+    .trim()
+}
+
 export async function generateStructuredObject<T>({
   schema,
   system,
@@ -59,7 +66,7 @@ export async function generateStructuredObject<T>({
     temperature: 0.1,
   })
 
-  const content = completion.choices[0]?.message?.content ?? ''
+  const content = stripReasoningBlocks(completion.choices[0]?.message?.content ?? '')
   const jsonText = extractJsonObject(content)
   const parsed = JSON.parse(jsonText) as unknown
 
@@ -87,5 +94,5 @@ export async function generateChatText({
     temperature: 0.2,
   })
 
-  return completion.choices[0]?.message?.content ?? ''
+  return stripReasoningBlocks(completion.choices[0]?.message?.content ?? '')
 }
