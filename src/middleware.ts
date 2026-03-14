@@ -24,19 +24,23 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // Refresh session (must be called before checking user)
-  const { data: { user } } = await supabase.auth.getUser()
+  try {
+    // Refresh session (must be called before checking user)
+    const { data: { user } } = await supabase.auth.getUser()
 
-  const pathname = request.nextUrl.pathname
-  const isProtected = PROTECTED.some(p => pathname.startsWith(p))
+    const pathname = request.nextUrl.pathname
+    const isProtected = PROTECTED.some(p => pathname.startsWith(p))
 
-  if (isProtected) {
-    const isGuest = request.cookies.get('guest')?.value === '1'
-    if (!user && !isGuest) {
-      const url = request.nextUrl.clone()
-      url.pathname = '/auth'
-      return NextResponse.redirect(url)
+    if (isProtected) {
+      const isGuest = request.cookies.get('guest')?.value === '1'
+      if (!user && !isGuest) {
+        const url = request.nextUrl.clone()
+        url.pathname = '/auth'
+        return NextResponse.redirect(url)
+      }
     }
+  } catch {
+    // Never crash the middleware — just let the request through
   }
 
   return response
